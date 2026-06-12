@@ -5,7 +5,7 @@ from .site import BRAND, PHONE, PHONE_DISPLAY
 PAGE = {
     "path": "about/",
     "title": f"{BRAND} 운영팀 소개 | 이 사이트를 만드는 사람과 기준",
-    "desc": f"성동구 방문 관리 안내 사이트 {BRAND}의 운영 주체, 글이 만들어지는 과정과 검수 방식, 콘텐츠 5원칙, 책임 한계와 정정 채널을 한 페이지에 공개합니다.",
+    "desc": f"{BRAND}의 운영 주체, 글이 만들어지는 과정과 검수 방식, 콘텐츠 5원칙, 책임 한계와 정정 채널을 공개합니다.",
     "h1": "이 사이트를 만드는 사람과 기준",
     "breadcrumb": [("운영자 소개", None)],
     "body": f"""

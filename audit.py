@@ -46,7 +46,8 @@ titles, descs = {}, {}
 for p in PAGES:
     titles.setdefault(p["title"], []).append(p["path"] or "/")
     descs.setdefault(p["desc"], []).append(p["path"] or "/")
-    if not (10 <= len(p["desc"]) <= 160):
+    # 네이버 검색결과 표시 기준에 맞춰 80자 이하 유지
+    if not (10 <= len(p["desc"]) <= 80):
         err(f"desc 길이 {len(p['desc'])}자: {p['path'] or '/'}")
 for t, paths in titles.items():
     if len(paths) > 1:
