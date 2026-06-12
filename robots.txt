@@ -1,4 +1,16 @@
+# 네이버 검색로봇
+User-agent: Yeti
+Allow: /
+
+# 구글 검색로봇
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+# 그 외 모든 로봇
 User-agent: *
 Allow: /
 
-Sitemap: https://www.seongdong-go.example.com/sitemap.xml
+Sitemap: https://seongdong-massage.pages.dev/sitemap.xml

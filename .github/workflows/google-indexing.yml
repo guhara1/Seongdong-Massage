@@ -1,0 +1,28 @@
+name: Google Indexing API 제출
+
+# 수동 실행 전용. 저장소 Secrets에 GOOGLE_INDEXING_CREDENTIALS
+# (서비스 계정 JSON 전체 내용)를 등록해 두어야 한다.
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "제출할 URL (공백 구분, 비우면 sitemap 전체)"
+        required: false
+        default: ""
+
+jobs:
+  google-indexing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 의존성 설치
+        run: pip install google-auth requests
+      - name: 서비스 계정 키 준비
+        run: echo '${{ secrets.GOOGLE_INDEXING_CREDENTIALS }}' > /tmp/sa.json
+      - name: Indexing API 제출
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json
+        run: python3 scripts/google_indexing.py ${{ github.event.inputs.urls }}

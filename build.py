@@ -250,9 +250,24 @@ def render_page(page: dict) -> str:
 """
 
 
+def _rfc822(dt) -> str:
+    """RSS pubDate 형식 (RFC 822, KST)."""
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    return (f"{days[dt.weekday()]}, {dt.day:02d} {months[dt.month - 1]} "
+            f"{dt.year} {dt.hour:02d}:{dt.minute:02d}:00 +0900")
+
+
 def build() -> None:
+    import datetime
+
     report = []
     sitemap_urls = []
+    rss_items = []
+    base = BASE_URL.rstrip("/")
+    today = datetime.datetime.now()
+    lastmod = today.strftime("%Y-%m-%d")
 
     for page in PAGES:
         path = page["path"]  # "" 또는 "seongdong/wangsimni-dong/" 형태
@@ -265,12 +280,22 @@ def build() -> None:
         chars = text_length(page["body"])
         noindex = page.get("noindex", False) or chars < MIN_INDEX_CHARS
         if not noindex:
-            sitemap_urls.append(BASE_URL.rstrip("/") + "/" + path)
+            loc = base + "/" + path
+            sitemap_urls.append(loc)
+            # RSS 아이템 — 아티클은 JSON-LD datePublished, 그 외는 빌드일 사용
+            pub = today
+            m = re.search(r'"datePublished"\s*:\s*"(\d{4})-(\d{2})-(\d{2})"',
+                          page.get("extra_head", ""))
+            if m:
+                pub = datetime.datetime(int(m.group(1)), int(m.group(2)),
+                                        int(m.group(3)), 9, 0)
+            rss_items.append((pub, loc, page["title"], page["desc"]))
         report.append((path or "/", chars, "noindex" if noindex else "index"))
 
-    # sitemap.xml
+    # sitemap.xml — lastmod 포함 (검색엔진이 갱신 여부를 빠르게 판단)
     urls = "\n".join(
-        f"  <url><loc>{u}</loc></url>" for u in sitemap_urls
+        f"  <url><loc>{html.escape(u)}</loc><lastmod>{lastmod}</lastmod></url>"
+        for u in sitemap_urls
     )
     with open(os.path.join(ROOT, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write(
@@ -279,11 +304,48 @@ def build() -> None:
             f"{urls}\n</urlset>\n"
         )
 
-    # robots.txt
+    # rss.xml — 네이버 서치어드바이저 RSS 제출용 (RSS 2.0)
+    rss_items.sort(key=lambda it: it[0], reverse=True)
+    items_xml = "\n".join(
+        "  <item>\n"
+        f"    <title>{html.escape(t)}</title>\n"
+        f"    <link>{html.escape(u)}</link>\n"
+        f"    <guid isPermaLink=\"true\">{html.escape(u)}</guid>\n"
+        f"    <description>{html.escape(d)}</description>\n"
+        f"    <pubDate>{_rfc822(pub)}</pubDate>\n"
+        "  </item>"
+        for pub, u, t, d in rss_items
+    )
+    with open(os.path.join(ROOT, "rss.xml"), "w", encoding="utf-8") as f:
+        f.write(
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
+            "<channel>\n"
+            f"  <title>{html.escape(BRAND)} — 성동 출장마사지·홈타이 안내</title>\n"
+            f"  <link>{base}/</link>\n"
+            "  <description>성동구 전지역 방문 관리(출장마사지·홈타이) 지역·역세권·테마 안내</description>\n"
+            "  <language>ko</language>\n"
+            f"  <lastBuildDate>{_rfc822(today)}</lastBuildDate>\n"
+            f'  <atom:link href="{base}/rss.xml" rel="self" type="application/rss+xml" />\n'
+            f"{items_xml}\n"
+            "</channel>\n</rss>\n"
+        )
+
+    # robots.txt — 네이버(Yeti)·구글(Googlebot) 명시 허용 + 사이트맵 안내
     with open(os.path.join(ROOT, "robots.txt"), "w", encoding="utf-8") as f:
         f.write(
-            "User-agent: *\nAllow: /\n\n"
-            f"Sitemap: {BASE_URL.rstrip('/')}/sitemap.xml\n"
+            "# 네이버 검색로봇\n"
+            "User-agent: Yeti\n"
+            "Allow: /\n\n"
+            "# 구글 검색로봇\n"
+            "User-agent: Googlebot\n"
+            "Allow: /\n\n"
+            "User-agent: Googlebot-Image\n"
+            "Allow: /\n\n"
+            "# 그 외 모든 로봇\n"
+            "User-agent: *\n"
+            "Allow: /\n\n"
+            f"Sitemap: {base}/sitemap.xml\n"
         )
 
     # .nojekyll (GitHub Pages)

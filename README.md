@@ -41,8 +41,39 @@ python3 build.py
 - 상단/하위 메뉴와 푸터에 키워드·지역명·역명 대량 나열 없음
 - 모든 페이지 본문은 페이지별 고유 작성 (지역명만 바꾼 복붙 없음)
 
-## 배포 전 해야 할 일
+## 색인(인덱싱) 운영
 
-1. `content/site.py`의 `BASE_URL`을 실제 도메인으로 변경
-2. `python3 build.py` 재실행 (canonical·sitemap·robots.txt에 반영됨)
-3. Google Search Console에 `sitemap.xml` 제출
+배포 도메인: **https://seongdong-massage.pages.dev** (`content/site.py`의 `BASE_URL`)
+
+빌드 시 자동 생성되는 파일:
+
+- `sitemap.xml` — 색인 페이지 56개, `lastmod` 포함 (noindex 약관 2종 제외)
+- `rss.xml` — RSS 2.0, 네이버 서치어드바이저 RSS 제출용
+- `robots.txt` — 네이버(Yeti)·구글(Googlebot) 명시 허용 + Sitemap 안내
+
+### 최초 1회 등록
+
+1. **구글 Search Console**: 속성 등록 → `sitemap.xml` 제출
+2. **네이버 서치어드바이저**: 소유확인(메인페이지 메타태그 적용됨) →
+   요청 > 사이트맵 제출(`sitemap.xml`) + RSS 제출(`rss.xml`)
+
+### 빠른 색인 통보 자동화
+
+- **IndexNow** (빙·네이버 등 참여 엔진 즉시 통보):
+  키 파일 `9e702d8add22dac78825c23534de8d8f.txt`가 사이트 루트에 배포되며,
+  `python3 scripts/ping_indexnow.py` 실행 시 sitemap 전체(또는 인자 URL)를 제출.
+  `.github/workflows/indexnow.yml`이 main 푸시 시 자동 실행.
+- **구글 Indexing API** (구글은 IndexNow 미참여):
+  `scripts/google_indexing.py` — 서비스 계정 JSON 필요, 사용법은 스크립트 주석 참고.
+  GitHub Actions 수동 실행: `.github/workflows/google-indexing.yml`
+  (Secrets에 `GOOGLE_INDEXING_CREDENTIALS` 등록).
+  공식적으로는 구인·라이브방송 페이지용 API이므로 일반 페이지는
+  Search Console 사이트맵 + URL 검사 색인 요청이 정석.
+- **sitemap ping**: 구글의 `google.com/ping` 엔드포인트는 2023년 폐기되어
+  더 이상 동작하지 않음 — Search Console 등록으로 대체됨.
+
+### 콘텐츠 수정 시
+
+1. `content/` 수정 → `python3 build.py` → `python3 audit.py` 통과 확인
+2. 커밋·푸시 (Cloudflare Pages 자동 배포)
+3. IndexNow 워크플로가 자동 통보 (수동: `python3 scripts/ping_indexnow.py`)
