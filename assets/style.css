@@ -668,3 +668,43 @@ th { background: var(--panel-2); color: var(--gold-soft); font-family: var(--ser
   .page-content section { padding: 26px 22px 22px; border-radius: 14px; }
   .cta { padding: 36px 20px; }
 }
+
+/* ── 이용 후기 카드 ─────────────────────────── */
+.rev-agg {
+  font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
+  color: var(--gold-soft); letter-spacing: 0.02em; margin-left: 8px;
+  white-space: nowrap;
+}
+.review-list { list-style: none; margin: 18px 0 4px; padding: 0; display: grid; gap: 14px; }
+.review-card {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 12px; padding: 18px 20px;
+}
+.review-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px;
+  margin-bottom: 8px;
+}
+.review-stars { color: var(--gold); letter-spacing: 2px; font-size: 0.95rem; }
+.review-meta { color: var(--text-dim); font-size: 0.82rem; letter-spacing: 0.02em; }
+.review-body { margin: 0 0 8px; line-height: 1.75; }
+.review-author { margin: 0; color: var(--text-dim); font-size: 0.85rem; text-align: right; }
+
+/* ── 연관 안내(롱테일 내부링크) ──────────────── */
+.related-links { border-top: 1px solid var(--line-gold); }
+.related-grid {
+  display: grid; gap: 10px; margin: 18px 0 4px; padding: 0; list-style: none;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.related-grid li { margin: 0; }
+.related-grid a {
+  display: block; padding: 13px 16px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--gold-deep);
+  border-radius: 10px; color: var(--text); font-size: 0.9rem; letter-spacing: 0.02em;
+  transition: 0.18s;
+}
+.related-grid a:hover {
+  border-color: var(--gold); border-left-color: var(--gold);
+  color: var(--gold-soft); transform: translateX(3px);
+  background: linear-gradient(90deg, #13203a, var(--panel-2));
+}

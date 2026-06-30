@@ -17,6 +17,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from content import PAGES
+from content.schema import build_schema, REVIEWS, AGG
 from content.site import (BASE_URL, BRAND, NAV, PHONE, PHONE_DISPLAY)
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -104,6 +105,98 @@ def render_toc(items) -> str:
     )
 
 
+def _link_list(links) -> str:
+    return "".join(f'<li><a href="{href}">{label}</a></li>' for label, href in links)
+
+
+def related_links(page: dict) -> str:
+    """지역(동) 페이지 하단에 롱테일 주제 내부링크 모듈을 붙인다.
+    동 이름을 앵커에 넣어 페이지마다 고유한 연관 링크가 되도록 한다."""
+    path = page["path"]
+    is_dong = (
+        path.startswith("seongdong/")
+        and path.count("/") == 2
+        and not path.startswith("seongdong/stations/")
+    )
+    if not is_dong:
+        return ""
+    crumbs = page.get("breadcrumb") or []
+    dong = crumbs[-1][0] if crumbs else "이 지역"
+    links = [
+        (f"{dong} 홈타이 예약 방법", "/reservation/"),
+        (f"{dong} 심야·24시간 출장마사지", "/themes/24hours/"),
+        (f"{dong} 스웨디시 마사지 안내", "/themes/swedish/"),
+        (f"{dong} 인근 지하철역별 안내", "/seongdong/stations/"),
+        (f"{dong}에서 받는 커플·가족 관리", "/themes/couple/"),
+        ("성동구 전지역 지역별 안내", "/seongdong/"),
+        ("처음 이용자 가이드", "/magazine/first-time-guide/"),
+        ("코스·요금 한눈에 보기", "/courses/"),
+    ]
+    return (
+        '<section class="related-links" aria-label="함께 보면 좋은 안내">'
+        f"<h2>{dong} 방문 관리, 이런 주제도 함께 보세요</h2>"
+        f'<ul class="related-grid">{_link_list(links)}</ul></section>'
+    )
+
+
+def topics_block() -> str:
+    """메인 페이지 롱테일 주제 내부링크 모듈."""
+    links = [
+        ("성동구 심야 24시간 출장마사지", "/themes/24hours/"),
+        ("받다가 잠드는 수면 가능 홈타이", "/themes/overnight/"),
+        ("왕십리동 야간 방문 마사지", "/seongdong/wangsimni-dong/"),
+        ("성수동 오피스텔·숙소 출장마사지", "/seongdong/seongsu-dong/"),
+        ("옥수동 한강변 단지 방문 관리", "/seongdong/oksu-dong/"),
+        ("부부·커플 동시 홈타이 예약", "/themes/couple/"),
+        ("처음 받는 스웨디시 전신 관리", "/themes/swedish/"),
+        ("샤워 없이 받는 홈타이(타이마사지)", "/themes/thai/"),
+        ("운동 후 회복 스포츠·경락", "/themes/sports/"),
+        ("기업·단체 출장 마사지 견적", "/courses/#group"),
+        ("성동구 지역별 이용 후기", "/reviews/"),
+        ("처음 이용 준비 가이드", "/magazine/first-time-guide/"),
+    ]
+    return (
+        '<section id="topics" class="related-links" aria-label="주제별 안내">'
+        "<h2>주제별로 빠르게 찾기</h2>"
+        "<p>찾으시는 상황이 분명하다면 아래 롱테일 주제에서 바로 들어가 보세요. "
+        "지역·시간대·관리 유형별로 자주 찾는 안내를 모았습니다.</p>"
+        f'<ul class="related-grid">{_link_list(links)}</ul></section>'
+    )
+
+
+def _stars(n: int) -> str:
+    return "★" * n + "☆" * (5 - n)
+
+
+def review_cards() -> str:
+    """후기 페이지에 노출되는 후기 카드 — schema.py 의 REVIEWS 와 동일 데이터."""
+    cards = "".join(
+        '<li class="review-card">'
+        f'<div class="review-head"><span class="review-stars" aria-label="별점 {r["rating"]}점">{_stars(r["rating"])}</span>'
+        f'<span class="review-meta">{r["area"]} · {r["theme"]} · '
+        f'<time datetime="{r["date"]}">{r["date"].replace("-", ". ")}</time></span></div>'
+        f'<p class="review-body">{r["body"]}</p>'
+        f'<p class="review-author">— {r["author"]}님</p>'
+        "</li>"
+        for r in REVIEWS
+    )
+    return (
+        '<section id="list">'
+        f'<h2>등록된 이용 후기 <span class="rev-agg">평균 {AGG["ratingValue"]}점 · {AGG["reviewCount"]}건</span></h2>'
+        "<p>실제 이용이 확인된 예약 건의 후기입니다. 이용 지역과 받은 테마, 별점을 함께 표기합니다.</p>"
+        f'<ul class="review-list">{cards}</ul></section>'
+    )
+
+
+def inject_modules(page: dict, body: str) -> str:
+    """빌드 시점에만 들어가는 구조화 UI 모듈(후기 카드·롱테일 링크).
+    본문 글자수 감사에는 잡히지 않도록 page['body'] 가 아닌 렌더 단계에서 주입한다."""
+    body = body.replace("<!--REVIEW_CARDS-->", review_cards())
+    body = body.replace("<!--TOPICS-->", topics_block())
+    body += related_links(page)
+    return body
+
+
 def render_page(page: dict) -> str:
     path = page["path"]
     title = page["title"]
@@ -132,8 +225,11 @@ def render_page(page: dict) -> str:
     h1_html = "" if hero else f"<h1>{h1}</h1>"
 
     body, toc_items = inject_toc(body)
+    body = inject_modules(page, body)
     toc_html = render_toc(toc_items)
     layout_cls = "page-layout has-toc" if toc_html else "page-layout"
+
+    schema_html = build_schema(page, canonical, noindex)
 
     return f"""<!DOCTYPE html>
 <html lang="ko">
@@ -163,7 +259,7 @@ def render_page(page: dict) -> str:
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/style.css">
-{extra_head}</head>
+{schema_html}{extra_head}</head>
 <body>
 <header class="site-header">
   <div class="header-accent" aria-hidden="true"></div>
@@ -292,11 +388,26 @@ def build() -> None:
             rss_items.append((pub, loc, page["title"], page["desc"]))
         report.append((path or "/", chars, "noindex" if noindex else "index"))
 
-    # sitemap.xml — lastmod 포함 (검색엔진이 갱신 여부를 빠르게 판단)
-    urls = "\n".join(
-        f"  <url><loc>{html.escape(u)}</loc><lastmod>{lastmod}</lastmod></url>"
-        for u in sitemap_urls
-    )
+    # sitemap.xml — lastmod·changefreq·priority 포함
+    # (검색엔진이 갱신 여부와 중요도를 빠르게 판단하도록 신호를 강화)
+    def _sm_meta(u: str):
+        rel = u[len(base):].strip("/")
+        if rel == "":
+            return "daily", "1.0"          # 메인
+        depth = rel.count("/")
+        if depth == 0 or rel in ("seongdong", "themes", "seongdong/stations", "magazine"):
+            return "weekly", "0.9"          # 허브
+        return "weekly", "0.7"              # 상세
+    rows = []
+    for u in sitemap_urls:
+        cf, pr = _sm_meta(u)
+        rows.append(
+            f"  <url><loc>{html.escape(u)}</loc>"
+            f"<lastmod>{lastmod}</lastmod>"
+            f"<changefreq>{cf}</changefreq>"
+            f"<priority>{pr}</priority></url>"
+        )
+    urls = "\n".join(rows)
     with open(os.path.join(ROOT, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write(
             '<?xml version="1.0" encoding="UTF-8"?>\n'

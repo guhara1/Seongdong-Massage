@@ -1,74 +1,13 @@
 # 메인 페이지 — 허브 역할. 모든 키워드를 밀어 넣지 않고 상세 페이지로 연결한다.
-from .site import BASE_URL, BRAND, PHONE, PHONE_DISPLAY
+# 구조화 데이터(업체·FAQ·평점)는 content/schema.py 가 빌드 시 자동 주입한다.
+from .site import BRAND, PHONE, PHONE_DISPLAY, NAVER_VERIFY
 from .pricing import PRICING
 
-_JSONLD = f"""<meta name="naver-site-verification" content="aaa585a5584bb0979adb7c977c4d2d15a310523a" />
-<script type="application/ld+json">
-{{
-  "@context": "https://schema.org",
-  "@type": "HealthAndBeautyBusiness",
-  "name": "{BRAND}",
-  "telephone": "{PHONE}",
-  "url": "{BASE_URL}/",
-  "image": "{BASE_URL}/assets/og-image.png",
-  "description": "성동구 전지역 방문 출장마사지·홈타이 예약 안내",
-  "areaServed": {{
-    "@type": "AdministrativeArea",
-    "name": "서울특별시 성동구"
-  }},
-  "openingHours": "Mo-Su 00:00-24:00",
-  "priceRange": "₩90,000 - ₩180,000"
-}}
-</script>
-<script type="application/ld+json">
-{{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {{
-      "@type": "Question",
-      "name": "성동구 전지역 방문이 가능한가요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "예약 시간, 정확한 위치, 배정 상황에 따라 가능 여부가 달라집니다. 지역별 안내 페이지에서 왕십리동, 성수동, 금호동, 옥수동, 행당동 등 열 개 대표 동 기준으로 확인할 수 있습니다."
-      }}
-    }},
-    {{
-      "@type": "Question",
-      "name": "왕십리역이나 성수역 근처도 가능한가요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "성동구 주요 역세권은 역 상세 페이지에서 주변 생활권과 함께 안내합니다. 정확한 가능 여부는 예약 시 위치를 기준으로 확인합니다."
-      }}
-    }},
-    {{
-      "@type": "Question",
-      "name": "금호1가동이나 성수1가제1동 페이지는 왜 없나요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "가 단위·숫자 행정동은 금호동, 성수동, 행당동, 왕십리동 대표 페이지에서 통합 안내하여 중복 페이지 위험을 줄입니다."
-      }}
-    }},
-    {{
-      "@type": "Question",
-      "name": "당일 예약도 가능한가요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "가능할 수 있지만 저녁 시간대와 주말은 문의가 많을 수 있어 사전 예약을 권장합니다."
-      }}
-    }},
-    {{
-      "@type": "Question",
-      "name": "테마별 관리는 어디에서 확인하나요?",
-      "acceptedAnswer": {{
-        "@type": "Answer",
-        "text": "스웨디시, 타이마사지, 홈케어 등 테마별 안내 페이지에서 특징과 추천 대상을 확인할 수 있습니다."
-      }}
-    }}
-  ]
-}}
-</script>
-"""
+# 네이버 서치어드바이저 소유확인 메타(도메인별 속성 코드). schema.py 스키마와 별개로 head 에 출력.
+_JSONLD = "".join(
+    f'<meta name="naver-site-verification" content="{code}" />\n'
+    for code in NAVER_VERIFY
+)
 
 _HERO = f"""<section class="hero">
   <div class="hero-inner">
@@ -204,6 +143,7 @@ _BODY = f"""
 </div>
 </section>
 
+<!--TOPICS-->
 {PRICING}
 <section id="contact" class="cta">
 <h2>예약문의</h2>

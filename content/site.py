@@ -1,9 +1,16 @@
 # 사이트 공통 설정
-BASE_URL = "https://seongdong-massage.pages.dev"
+BASE_URL = "https://seongdong-massage.netlify.app"
 
 BRAND = "간다GO"
 PHONE = "0508-202-4719"
 PHONE_DISPLAY = "0508-202-4719"
+
+# 네이버 서치어드바이저 사이트 소유확인 코드(여러 속성 등록 가능).
+# 도메인 변경 시 새 속성 코드를 추가하면 메인 페이지 <head>에 함께 출력된다.
+NAVER_VERIFY = [
+    "aaa585a5584bb0979adb7c977c4d2d15a310523a",
+    "2137119a21764d5a3c49f18ea55c6d64f7d0ddcd",
+]
 
 # 상단 메뉴 — 하위 메뉴에는 키워드를 반복하지 않고 지역명·역명만 표시한다.
 # 환승역(왕십리역·옥수역·성수역)은 노선이 여러 개라도 URL 하나만 사용한다.

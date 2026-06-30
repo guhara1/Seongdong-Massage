@@ -1,8 +1,15 @@
 name: Google Indexing API 제출
 
-# 수동 실행 전용. 저장소 Secrets에 GOOGLE_INDEXING_CREDENTIALS
-# (서비스 계정 JSON 전체 내용)를 등록해 두어야 한다.
+# 콘텐츠가 main 에 푸시되면 변경 URL을 구글 Indexing API로 자동 제출한다.
+# (구글은 IndexNow 미참여라 별도 처리) 저장소 Secrets 의
+# GOOGLE_INDEXING_CREDENTIALS(서비스 계정 JSON 전체)가 있어야 동작하며,
+# 없으면 단계가 안전하게 건너뛰어 CI를 실패시키지 않는다.
 on:
+  push:
+    branches: [main]
+    paths:
+      - "**/index.html"
+      - "sitemap.xml"
   workflow_dispatch:
     inputs:
       urls:
@@ -18,11 +25,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: 자격증명 확인
+        id: cred
+        env:
+          CRED: ${{ secrets.GOOGLE_INDEXING_CREDENTIALS }}
+        run: |
+          if [ -z "$CRED" ]; then
+            echo "GOOGLE_INDEXING_CREDENTIALS 미설정 — 제출 건너뜀"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: 의존성 설치
+        if: steps.cred.outputs.ok == 'true'
         run: pip install google-auth requests
       - name: 서비스 계정 키 준비
+        if: steps.cred.outputs.ok == 'true'
         run: echo '${{ secrets.GOOGLE_INDEXING_CREDENTIALS }}' > /tmp/sa.json
+      - name: 배포 대기
+        if: steps.cred.outputs.ok == 'true'
+        run: sleep 60
       - name: Indexing API 제출
+        if: steps.cred.outputs.ok == 'true'
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json
         run: python3 scripts/google_indexing.py ${{ github.event.inputs.urls }}

@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://seongdong-massage.pages.dev/sitemap.xml
+Sitemap: https://seongdong-massage.netlify.app/sitemap.xml

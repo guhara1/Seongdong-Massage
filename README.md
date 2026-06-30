@@ -43,7 +43,7 @@ python3 build.py
 
 ## 색인(인덱싱) 운영
 
-배포 도메인: **https://seongdong-massage.pages.dev** (`content/site.py`의 `BASE_URL`)
+배포 도메인: **https://seongdong-massage.netlify.app** (`content/site.py`의 `BASE_URL`)
 
 빌드 시 자동 생성되는 파일:
 
